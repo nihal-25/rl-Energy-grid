@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.sqlite3
+
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Data files
+time_series_60min_singleindex.csv
+germany_energy.csv
+
+# Model files
+ppo_energy.zip
+vecnormalize.pkl
+
+# Plots
+*.png
+
+# IDE settings
+.vscode/
+.idea/
