@@ -8,13 +8,21 @@ def make_env():
 
 if __name__ == "__main__":
     env = DummyVecEnv([make_env])
-    env = VecNormalize(env, norm_obs=True, norm_reward=False)
+    env = VecNormalize(env, norm_obs=True, norm_reward=True)
 
-    model = PPO("MlpPolicy", env, verbose=1,
-                n_steps=1024, batch_size=64, learning_rate=3e-4,
-                gamma=0.99, ent_coef=0.01)
+    model = PPO(
+    "MlpPolicy", 
+    env, 
+    verbose=1,
+    n_steps=2048,          # increased for stability
+    batch_size=128,        # bigger batch
+    learning_rate=1e-4,    # smaller LR for stability
+    gamma=0.995,           # longer horizon
+    ent_coef=0.005,        # mild exploration
+)
 
-    model.learn(total_timesteps=200000)
+    model.learn(total_timesteps=2500000)
+
     model.save("ppo_energy")
     env.save("vecnormalize.pkl")
     print("Training done and model saved.")

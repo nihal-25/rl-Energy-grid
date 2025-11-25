@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Energy Grid Optimization (Reinforcement Learning)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 18px; }
+    h1 { margin-bottom: 8px; }
+    .row { margin: 6px 0; }
+    .label { font-weight: 600; }
+    #chartWrap { max-width: 1100px; }
+  </style>
+</head>
+<body>
+  <h1>Smart Energy Grid Optimization (Reinforcement Learning)</h1>
+
+  <div class="row"><span class="label">Battery State of Charge:</span> <span id="soc">—</span></div>
+  <div class="row"><span class="label">RL Action:</span> <span id="action">—</span></div>
+  <div class="row"><span class="label">Reward:</span> <span id="reward">—</span></div>
+
+  <div id="chartWrap">
+    <canvas id="gridChart"></canvas>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const ctx = document.getElementById('gridChart').getContext('2d');
+
+    const data = {
+      labels: [],
+      datasets: [
+        { label: 'Load Demand', data: [], borderWidth: 2, fill: false },
+        { label: 'Solar Generation', data: [], borderWidth: 2, fill: false },
+        { label: 'Wind Generation', data: [], borderWidth: 2, fill: false },
+        { label: 'Reward', data: [], borderWidth: 2, fill: false, yAxisID: 'y1' }
+      ]
+    };
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data,
+      options: {
+        animation: false,
+        responsive: true,
+        interaction: { mode: 'nearest', intersect: false },
+        scales: {
+          y: { position: 'left', title: { display: true, text: 'Power (normalized/units)' } },
+          y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Reward' } }
+        }
+      }
+    });
+
+    const elSoc = document.getElementById('soc');
+    const elAction = document.getElementById('action');
+    const elReward = document.getElementById('reward');
+
+    let step = 0;
+    async function tick() {
+      try {
+        const res = await fetch('/step');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const j = await res.json();
+
+        // Update labels
+        step += 1;
+        elSoc.textContent = j.battery_soc.toFixed(3);
+        elAction.textContent = j.action.toFixed(3);
+        elReward.textContent = j.reward.toFixed(3);
+
+        // Push to chart
+        data.labels.push(step);
+        data.datasets[0].data.push(j.load);
+        data.datasets[1].data.push(j.solar);
+        data.datasets[2].data.push(j.wind);
+        data.datasets[3].data.push(j.reward);
+
+        // Keep last 200 points for readability
+        const MAX = 200;
+        if (data.labels.length > MAX) {
+          data.labels.shift();
+          data.datasets.forEach(ds => ds.data.shift());
+        }
+
+        chart.update();
+      } catch (e) {
+        console.error('Fetch /step failed:', e);
+      }
+    }
+
+    // Poll every 500 ms
+    setInterval(tick, 500);
+  </script>
+</body>
+</html>

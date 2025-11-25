@@ -14,15 +14,21 @@ rewards = []
 
 for _ in range(500):
     action, _ = model.predict(obs, deterministic=True)
-    obs, reward, done, info = env.step(action)   # <-- only 4 values
-    rewards.append(reward[0])
+
+    # VecEnv step returns: obs, reward, done, info
+    obs, reward, done, info = env.step(action)
+
+    rewards.append(reward[0])  # reward is a vector, take first element
+
     if done:
         obs = env.reset()
 
 # Plot rewards
+plt.figure(figsize=(8,4))
 plt.plot(rewards)
-plt.title("Reward per step")
+plt.title("Reward per Step (Evaluation)")
 plt.xlabel("Step")
 plt.ylabel("Reward")
+plt.grid(True)
 plt.savefig("rewards.png")
 print("Saved rewards.png")
